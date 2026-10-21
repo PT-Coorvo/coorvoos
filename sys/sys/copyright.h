@@ -30,7 +30,7 @@
 /* Add a FreeBSD vendor copyright here - or via CFLAGS */
 #ifndef COPYRIGHT_Vendor
 #define	COPYRIGHT_Vendor \
-	""
+	"Copyright (c) 2026 The CoorvoOS Project.\n"
 #endif
 
 /* FreeBSD */

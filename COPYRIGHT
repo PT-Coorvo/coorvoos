@@ -1,4 +1,9 @@
 
+CoorvoOS is based on FreeBSD.  The CoorvoOS modifications are distributed
+under the same terms as FreeBSD, reproduced below.
+
+Copyright (c) 2026 The CoorvoOS Project.
+
 The compilation of software known as FreeBSD is distributed under the
 following terms:
 
