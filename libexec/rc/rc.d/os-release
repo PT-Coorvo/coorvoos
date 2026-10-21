@@ -18,10 +18,10 @@ load_rc_config $name
 
 : ${osrelease_file:=/var/run/os-release}
 : ${osrelease_perms:=444}
-: ${osrelease_home_url:="https://www.FreeBSD.org"}
-: ${osrelease_documentation_url:="https://docs.FreeBSD.org"}
-: ${osrelease_support_url:="https://www.FreeBSD.org/support"}
-: ${osrelease_bug_report_url:="https://bugs.FreeBSD.org"}
+: ${osrelease_home_url:="https://coorvo.com"}
+: ${osrelease_documentation_url:="https://coorvo.com"}
+: ${osrelease_support_url:="https://coorvo.com"}
+: ${osrelease_bug_report_url:="https://github.com/PT-Coorvo/coorvoos/issues"}
 
 osrelease_start()
 {

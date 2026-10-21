@@ -1,7 +1,10 @@
 
 Welcome to CoorvoOS!
 
-CoorvoOS is based on FreeBSD; the FreeBSD resources below apply.
+CoorvoOS Website:      https://coorvo.com/
+Report Issues:         https://github.com/PT-Coorvo/coorvoos/issues
+
+CoorvoOS is based on FreeBSD; the FreeBSD resources below also apply.
 
 Release Notes, Errata: https://www.FreeBSD.org/releases/
 Security Advisories:   https://www.FreeBSD.org/security/
