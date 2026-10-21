@@ -519,6 +519,9 @@ branddefs = {
 		ascii = {
 			image = coorvo_brand,
 		},
+		fb = {
+			image = "/boot/images/coorvo-brand-rev.png",
+		},
 	},
 	["none"] = {
 		ascii = { image = none },
@@ -556,8 +559,8 @@ shift = default_shift
 
 -- Module exports
 drawer.default_brand = 'coorvo'
-drawer.default_color_logodef = 'orb'
-drawer.default_bw_logodef = 'orbbw'
+drawer.default_color_logodef = 'coorvo'
+drawer.default_bw_logodef = 'coorvo'
 -- For when things go terribly wrong; this def should be present here in the
 -- drawer module in case it's a filesystem issue.
 drawer.default_fallback_logodef = 'none'

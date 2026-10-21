@@ -17,7 +17,7 @@ return {
 			requires_color = false,
 		},
 		fb = {
-			image = "/boot/images/freebsd-install-brand-rev.png",
+			image = "/boot/images/coorvo-install-brand-rev.png",
 			width = 80,
 		},
 	}
