@@ -35,6 +35,7 @@ local screen = require("screen")
 local drawer = {}
 
 local fbsd_brand
+local coorvo_brand
 local none
 
 local menu_name_handlers
@@ -320,7 +321,7 @@ local function drawbox()
 	local y = menu_position.y - 1
 	local w = frame_size.w
 	local menu_header = loader.getenv("loader_menu_title") or
-	    "Welcome to FreeBSD"
+	    "Welcome to CoorvoOS"
 	local menu_header_align = loader.getenv("loader_menu_title_align")
 	local menu_header_x
 
@@ -464,6 +465,14 @@ fbsd_brand = {
 " | |   | | |    |    ||     |      |      |",
 " |_|   |_|  \\___|\\___||____/|_____/|_____/ "
 }
+coorvo_brand = {
+"   _____                                   ____    _____ ",
+"  / ____|                                 / __ \\  / ____|",
+" | |      ___    ___   _ __ __   __ ___  | |  | || (___  ",
+" | |     / _ \\  / _ \\ | '__|\\ \\ / // _ \\ | |  | | \\___ \\ ",
+" | |____| (_) || (_) || |    \\ V /| (_) || |__| | ____) |",
+"  \\_____|\\___/  \\___/ |_|     \\_/  \\___/  \\____/ |_____/ "
+}
 none = {""}
 
 menu_name_handlers = {
@@ -506,6 +515,11 @@ branddefs = {
 			image = "/boot/images/freebsd-brand-rev.png",
 		},
 	},
+	["coorvo"] = {
+		ascii = {
+			image = coorvo_brand,
+		},
+	},
 	["none"] = {
 		ascii = { image = none },
 	},
@@ -541,7 +555,7 @@ default_shift = {x = 0, y = 0}
 shift = default_shift
 
 -- Module exports
-drawer.default_brand = 'fbsd'
+drawer.default_brand = 'coorvo'
 drawer.default_color_logodef = 'orb'
 drawer.default_bw_logodef = 'orbbw'
 -- For when things go terribly wrong; this def should be present here in the

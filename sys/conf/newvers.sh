@@ -45,11 +45,15 @@
 #
 #	-V var	Print ${var}="${val-of-var}" and exit
 #
-#	-v	Print TYPE REVISION BRANCH RELEASE VERSION RELDATE variables
+#	-v	Print TYPE BRAND REVISION BRANCH RELEASE VERSION RELDATE variables
 #		like the -V command
 #
 
+# TYPE is the ABI-visible OS name (kern.ostype, uname -s) and must stay
+# "FreeBSD" for package and third-party compatibility.  BRAND is the
+# user-visible product name used in the kernel version string.
 TYPE="FreeBSD"
+BRAND="CoorvoOS"
 REVISION="16.0"
 BRANCH="CURRENT"
 if [ -n "${BRANCH_OVERRIDE}" ]; then
@@ -72,7 +76,7 @@ do
 done
 
 RELEASE="${RELEASE:-${REVISION}-${BRANCH}}"
-VERSION="${VERSION:-${TYPE} ${RELEASE}}"
+VERSION="${VERSION:-${BRAND} ${RELEASE}}"
 
 RELDATE=$(awk '/^#define[[:space:]]*__FreeBSD_version/ {print $3}' ${PARAMFILE:-${SYSDIR}/sys/param.h})
 
@@ -130,7 +134,7 @@ while getopts cd:rRvV: opt; do
 		;;
 	v)
 		# Only put variables that are single lines here.
-		for v in TYPE REVISION BRANCH RELEASE VERSION RELDATE; do
+		for v in TYPE BRAND REVISION BRANCH RELEASE VERSION RELDATE; do
 			eval val=\$${v}
 			echo ${v}=\"${val}\"
 		done
