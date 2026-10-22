@@ -1,3 +1,8 @@
+# CoorvoOS package signing keys: only the public key belongs in the tree.
+/share/keys/pkg/*.key
+/share/keys/pkg/*.pem
+coorvo-keys/
+repo.key
 *.a
 *.core
 *.lo

@@ -17,7 +17,7 @@ PKGCONFBRANCH?=	latest
 . endif
 .endif
 PKGCONF?=	FreeBSD.conf.${PKGCONFBRANCH}
-CONFS=		${PKGCONF}
+CONFS=		${PKGCONF} CoorvoOS.conf
 CONFSNAME_${PKGCONF}=	${PKGCONF:C/\.conf.+$/.conf/}
 CONFSDIR=	/etc/pkg
 CONFSMODE=	644
