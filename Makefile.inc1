@@ -602,9 +602,9 @@ PKG_VERSION:=	${_PKG_REVISION}${EXTRA_REVISION:C/[[:space:]]//g}
 
 .endif	# !defined(_MKSHOWCONFIG)
 
-PKG_NAME_PREFIX?=	FreeBSD
-PKG_MAINTAINER?=	re@FreeBSD.org
-PKG_WWW?=		https://www.FreeBSD.org
+PKG_NAME_PREFIX?=	CoorvoOS
+PKG_MAINTAINER?=	pkg@coorvo.com
+PKG_WWW?=		https://coorvo.com
 PKG_WORKERS_COUNT?=	1
 
 .if make(*package*)

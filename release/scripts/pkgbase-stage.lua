@@ -24,16 +24,16 @@ local function select_packages(pkg, media, all_libcompats)
 	-- usr.sbin/bsdinstall/scripts/pkgbase.in.
 	local kernel_packages = {
 		-- Most architectures use this
-		["FreeBSD-kernel-generic"] = true,
+		["CoorvoOS-kernel-generic"] = true,
 		-- PowerPC uses either of these, depending on platform
-		["FreeBSD-kernel-generic64"] = true,
-		["FreeBSD-kernel-generic64le"] = true,
+		["CoorvoOS-kernel-generic64"] = true,
+		["CoorvoOS-kernel-generic64le"] = true,
 	}
 
 	local components = {}
-	local rquery = capture(pkg .. "rquery -U -r FreeBSD-base %n")
+	local rquery = capture(pkg .. "rquery -U -r CoorvoOS-base %n")
 	for package in rquery:gmatch("[^\n]+") do
-		local set = package:match("^FreeBSD%-set%-(.*)$")
+		local set = package:match("^CoorvoOS%-set%-(.*)$")
 		if set then
 			components[set] = package
 		elseif kernel_packages[package] then
@@ -84,7 +84,7 @@ local function main()
 	-- Determines package subset selected
 	local media = assert(arg[1])
 	assert(media == "disc" or media == "dvd")
-	-- Directory containing FreeBSD-base repository config
+	-- Directory containing CoorvoOS-base repository config
 	local repo_dir = assert(arg[2])
 	-- Directory to create new repository
 	local target = assert(arg[3])

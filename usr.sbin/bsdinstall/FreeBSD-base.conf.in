@@ -1,7 +1,6 @@
-FreeBSD-base: {
-  url: "pkg+https://pkg.FreeBSD.org/${ABI}/%%SUBURL%%",
-  mirror_type: "srv",
-  signature_type: "fingerprints",
-  fingerprints: "/usr/share/keys/%%KEYSDIR%%",
+CoorvoOS-base: {
+  url: "https://pkg.coorvo.com/${ABI}/latest",
+  signature_type: "pubkey",
+  pubkey: "/usr/share/keys/pkg/coorvo-repo.pub",
   enabled: yes
 }

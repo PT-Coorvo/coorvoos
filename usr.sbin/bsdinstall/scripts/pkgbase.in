@@ -167,7 +167,7 @@ local function select_components(components, options)
 	end
 
 	local bsddialog_args = {
-		"--backtitle", "FreeBSD Installer",
+		"--backtitle", "CoorvoOS Installer",
 		"--title", "Select System Components",
 		"--nocancel",
 		"--disable-esc",
@@ -241,15 +241,15 @@ local function select_packages(pkg, options)
 	-- release/scripts/pkgbase-stage.lua.
 	local kernel_packages = {
 		-- Most architectures use this
-		["FreeBSD-kernel-generic"] = true,
+		["CoorvoOS-kernel-generic"] = true,
 		-- PowerPC uses either of these, depending on platform
-		["FreeBSD-kernel-generic64"] = true,
-		["FreeBSD-kernel-generic64le"] = true,
+		["CoorvoOS-kernel-generic64"] = true,
+		["CoorvoOS-kernel-generic64le"] = true,
 	}
 
-	local rquery = capture(pkg .. "rquery -U -r FreeBSD-base %n")
+	local rquery = capture(pkg .. "rquery -U -r CoorvoOS-base %n")
 	for package in rquery:gmatch("[^\n]+") do
-		local setname = package:match("^FreeBSD%-set%-(.+)$")
+		local setname = package:match("^CoorvoOS%-set%-(.+)$")
 
 		if setname then
 			components[setname] = components[setname] or {}
@@ -293,7 +293,7 @@ local function select_packages(pkg, options)
 		-- actually exists, because some sets (src, tests) don't
 		-- have a -dbg subpackage.
 		for _, c in ipairs(pkglist) do
-			local setname = c:match("^FreeBSD%-set%-(.*)$")
+			local setname = c:match("^CoorvoOS%-set%-(.*)$")
 			if debug and setname then
 				local dbgset = setname.."-dbg"
 				if components[dbgset] then
@@ -359,19 +359,19 @@ local function pkgbase()
 
 	local packages = table.concat(select_packages(pkg, options), " ")
 
-	while not os.execute(pkg .. "install -U -F -y -r FreeBSD-base " .. packages) do
+	while not os.execute(pkg .. "install -U -F -y -r CoorvoOS-base " .. packages) do
 		if not prompt_yn("Fetching packages failed, try again?") then
 			os.exit(1)
 		end
 	end
 
-	if not os.execute(pkg .. "install -U -y -r FreeBSD-base " .. packages) then
+	if not os.execute(pkg .. "install -U -y -r CoorvoOS-base " .. packages) then
 		os.exit(1)
 	end
 
-	-- Enable the FreeBSD-base repository for this system.
+	-- Enable the CoorvoOS-base repository for this system.
 	assert(os.execute("mkdir -p " .. chroot .. "/usr/local/etc/pkg/repos"))
-	assert(os.execute("echo 'FreeBSD-base: { enabled: yes }' > " .. chroot .. "/usr/local/etc/pkg/repos/FreeBSD.conf"))
+	assert(os.execute("echo 'CoorvoOS-base: { enabled: yes }' > " .. chroot .. "/usr/local/etc/pkg/repos/CoorvoOS.conf"))
 end
 
 pkgbase()

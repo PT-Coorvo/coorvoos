@@ -224,7 +224,7 @@ pkgbase-repo.tar: pkgbase-repo
 
 pkgbase-repo-dir: pkgbase-repo
 	mkdir -p pkgbase-repo-dir
-	printf "FreeBSD-base: { url: "file://%s", enabled: yes }" \
+	printf "CoorvoOS-base: { url: "file://%s", enabled: yes }" \
 	    ${.OBJDIR}/pkgbase-repo/${PKG_ABI}/latest \
 	    > pkgbase-repo-dir/FreeBSD-base.conf
 
