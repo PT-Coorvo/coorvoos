@@ -63,8 +63,11 @@ The brand that is drawn is configured by setting the
 variable in
 .Xr loader.conf 5
 to one of
+.Dq Li coorvo
+(the default),
+.Dq Li install ,
 .Dq Li fbsd
-(the default) or
+or
 .Dq Li none .
 .Pp
 The position of the logo can be configured by setting the
@@ -81,8 +84,11 @@ The environment variables that effect its behavior are:
 .It Va loader_brand
 Selects the desired brand in the beastie boot menu.
 Possible values are:
+.Dq Li coorvo
+(default),
+.Dq Li install ,
 .Dq Li fbsd
-(default) or
+or
 .Dq Li none .
 .It Va loader_brand_x
 Sets the desired column position of the brand.
