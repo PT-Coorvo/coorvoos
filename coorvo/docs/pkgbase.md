@@ -120,11 +120,16 @@ Perilaku pkg (diperiksa di source pkg, bukan asumsi):
 ### Cara aman: ganti nama di database, lalu pasang ulang di tempat
 
 `pkg set -p -n lama:baru` (`src/set.c`, fungsi `pkgdb_replace`) mengganti
-teks `lama` menjadi `baru` pada nama **semua** paket terpasang dan pada
-catatan dependensinya, dalam satu transaksi database, **tanpa menyentuh
-file**. `-p` berarti ganti substring di mana pun, jadi periksa dulu bahwa
-tidak ada paket lain yang namanya mengandung `FreeBSD-` di tengah.
-`-n` dan `-o` tidak bisa digabung dalam satu perintah.
+teks `lama` menjadi `baru` pada nama **semua** paket terpasang, **tanpa
+menyentuh file**. `-p` berarti ganti substring di mana pun, jadi periksa
+dulu bahwa tidak ada paket lain yang namanya mengandung `FreeBSD-` di
+tengah. `-n` dan `-o` tidak bisa digabung dalam satu perintah.
+
+Nama pada catatan dependensi **tidak** ikut terganti: query `PKG_SET_DEPNAME`
+di `libpkg/pkgdb.c` menulis `glob '?3'` (parameter di dalam tanda kutip),
+sehingga tidak pernah cocok. `-o` memang mengganti origin dependensi, tetapi
+nama dependensi tetap `FreeBSD-*` sampai `pkg upgrade -f` menulis ulang
+setiap paket beserta dependensinya dari repo.
 
 Setelah nama di database sama dengan nama di repo, `pkg upgrade -f` memasang
 ulang setiap paket sebagai upgrade paket yang sama: file ditimpa di
@@ -173,7 +178,12 @@ dengan `pkg info -l CoorvoOS-<nama>` sebelum memutuskan menghapusnya.
 pkg set -y -p -n FreeBSD-:CoorvoOS-
 pkg set -y -p -o base/FreeBSD-:base/CoorvoOS-
 pkg info -x '^FreeBSD-'          # harus kosong
-pkg check -d -n                  # dependensi masih konsisten
+pkg check -d -n                  # wajar melaporkan dependensi FreeBSD-* hilang;
+                                 # beres setelah langkah 5
+
+# 4b. Paket yang dikunci dilewati oleh pkg upgrade; buka kuncinya
+pkg lock -l
+pkg unlock -y -g 'CoorvoOS-*'    # hanya kalau daftar di atas tidak kosong
 
 # 5. Uji coba dulu, lalu pasang ulang paket base dari repo CoorvoOS
 pkg upgrade -n -f -r CoorvoOS-base -x '^CoorvoOS-'
@@ -188,10 +198,22 @@ daftar harus berisi **REINSTALLED/UPGRADED**, bukan **REMOVED** untuk paket
 base. Kalau ada paket base yang akan dihapus, hentikan dan kembali ke
 snapshot.
 
+Langkah 7: pkg menulis `<file>.pkgnew` dan membiarkan `<file>` apa adanya
+kalau file konfigurasi di disk berbeda dari yang tercatat di paket lama dan
+merge gagal (`pkg_extract_finalize` di `libpkg/pkg_add.c`). Setelah
+installworld, ini biasa terjadi pada `/etc/rc.d/*`, yang dipasang sebagai
+`CONFS`. Isi `.pkgnew` adalah isi paket baru; kalau di dalamnya masih ada
+teks FreeBSD (mis. `NAME=FreeBSD` di `rc.d/os-release`), paket itu dibangun
+dari tree lama. Cocokkan dengan paketnya sebelum menghapus:
+
 ```sh
 # 7. File konfigurasi yang gagal di-merge otomatis
-find /etc /usr/local/etc -name '*.pkgnew'
-# bandingkan, gabungkan manual, lalu hapus .pkgnew
+for f in $(find /etc /boot /usr/local/etc -name '*.pkgnew' 2>/dev/null); do
+  if cmp -s "${f%.pkgnew}" "$f"; then echo "IDENTIK: $f"
+  else echo "===== BEDA: $f"; diff -u "${f%.pkgnew}" "$f"; fi
+done
+grep '^[[:space:]]*NAME=' /etc/rc.d/os-release*   # harus NAME=CoorvoOS
+# IDENTIK: hapus .pkgnew. BEDA: gabungkan manual, lalu hapus .pkgnew.
 
 # 8. Reboot dan verifikasi
 shutdown -r now
@@ -211,7 +233,33 @@ pkg upgrade -n -r CoorvoOS-base            # "Your packages are up to date"
 Untuk VM uji coba, alternatif paling aman adalah memasang CoorvoOS baru dari
 ISO yang sudah berisi paket `CoorvoOS-*`, tanpa migrasi.
 
-## 5. Yang belum ikut CoorvoOS
+## 5. Masalah yang diketahui
+
+`makewhatis` (mandoc) crash dengan Signal 11 saat `make packages`, sudah tiga
+kali, dan sempat menggagalkan build. Selidiki sebelum `make release`.
+
+Yang dijalankan adalah `makewhatis` milik **host** (`/usr/bin/makewhatis`,
+disalin ke `INSTALLTMP` lewat `ITOOLS` di `Makefile.inc1`), dipanggil target
+`makedb` di `share/man/Makefile` pada direktori staging. Jadi crash berasal
+dari world yang terpasang di mesin build, bukan dari hasil build baru.
+Perubahan man page di branch ini (`loader.conf.5`, `menu.4th.8`,
+`drawer.lua.8`) hanya mengganti kata, tidak mengubah struktur mdoc.
+
+Data yang dibutuhkan:
+
+```sh
+grep -n -B5 'Signal 11' /root/build.log
+# jalankan ulang di direktori staging (WSTAGEDIR = ${OBJTOP}/worldstage)
+sysctl kern.coredump=1; ulimit -c unlimited
+makewhatis -p /usr/obj/usr/src/amd64.amd64/worldstage/usr/share/man
+dmesg | tail          # "pid ... (makewhatis), ... exited on signal 11"
+```
+
+Kalau crash bisa diulang, cari file man penyebabnya dengan `makewhatis -t`
+per file atau `mandoc -T lint`. Kalau tidak bisa diulang, curigai memori VM
+(RAM/swap habis saat `-j8`).
+
+## 6. Yang belum ikut CoorvoOS
 
 Konfigurasi image cloud dan OCI di `release/tools/*.conf` (ec2, gce, azure,
 oci-image-*) dan `release/scripts/make-oci-image.sh` masih memakai nama
