@@ -169,61 +169,110 @@ pkg rquery -r CoorvoOS-base '%n' | sed -n 's/^CoorvoOS-//p' | sort > /tmp/remote
 comm -23 /tmp/local.txt /tmp/remote.txt   # terpasang tapi tidak ada di repo
 ```
 
-Paket di hasil `comm` (biasanya paket yang dihapus/diganti nama antara 15.x
-dan 16) tidak ikut di-upgrade. Biarkan dulu; setelah migrasi periksa isinya
-dengan `pkg info -l CoorvoOS-<nama>` sebelum memutuskan menghapusnya.
+Paket di hasil `comm` tidak ikut di-upgrade karena tidak ada di repo 16.
+Contoh nyata di VM uji: `kernel-generic-mmccam`, `kernel-generic-nodebug`,
+`kernel-minimal` (masing-masing beserta `-dbg`), dan `lldb-dev` 15.0 sisa
+image awal. Biarkan dulu; urus setelah migrasi (langkah 7).
 
 ```sh
 # 4. Ganti nama dan origin di database (tidak menyentuh file)
-pkg set -y -p -n FreeBSD-:CoorvoOS-
+pkg set -y -p -n FreeBSD-:CoorvoOS-     # di VM uji: 522 paket
 pkg set -y -p -o base/FreeBSD-:base/CoorvoOS-
-pkg info -x '^FreeBSD-'          # harus kosong
-pkg check -d -n                  # wajar melaporkan dependensi FreeBSD-* hilang;
-                                 # beres setelah langkah 5
+pkg info -x '^FreeBSD-'                 # harus kosong
+pkg check -d -n
+```
 
-# 4b. Paket yang dikunci dilewati oleh pkg upgrade; buka kuncinya
+Di titik ini `pkg check -d -n` melaporkan ratusan
+`missing dependency: FreeBSD-*`. Itu wajar: `pkg set -n` hanya mengganti
+nama paket, bukan nama dependensinya (lihat di atas). Keluhan ini hilang
+sendiri setelah langkah 5, karena paket baru membawa dependensi `CoorvoOS-*`.
+
+```sh
+# 4b. Paket yang dikunci (pkg lock) dilewati oleh pkg upgrade
 pkg lock -l
-pkg unlock -y -g 'CoorvoOS-*'    # hanya kalau daftar di atas tidak kosong
+pkg unlock -y -g 'CoorvoOS-*'
 
-# 5. Uji coba dulu, lalu pasang ulang paket base dari repo CoorvoOS
-pkg upgrade -n -f -r CoorvoOS-base -x '^CoorvoOS-'
-pkg upgrade -f -r CoorvoOS-base -x '^CoorvoOS-'
+# 5a. Uji coba. Simpan seluruh output ke file, jangan hanya tail
+pkg upgrade -n -f -r CoorvoOS-base -x '^CoorvoOS-' > /root/migrate-dryrun.log 2>&1
+grep -E 'to be|Number of' /root/migrate-dryrun.log
+```
+
+Yang boleh muncul hanya `to be UPGRADED` dan `to be REINSTALLED`. Kalau ada
+yang lain, terutama `to be REMOVED`, hentikan dan jangan lanjut.
+
+```sh
+# 5b. Jalankan sebenarnya di background dengan log: sshd ikut diperbarui,
+#     sehingga sesi SSH bisa putus di tengah
+nohup pkg upgrade -y -f -r CoorvoOS-base -x '^CoorvoOS-' > /root/migrate.log 2>&1 &
+tail -f /root/migrate.log
+pkg check -d -n      # sekarang hanya paket sisa dari comm yang mengeluh
 
 # 6. Paket baru yang ada di 16 tetapi belum terpasang
 pkg install -n -r CoorvoOS-base CoorvoOS-set-base CoorvoOS-set-kernels
 ```
 
-Pada langkah 5, periksa hasil `-n` sebelum menjalankan yang sebenarnya:
-daftar harus berisi **REINSTALLED/UPGRADED**, bukan **REMOVED** untuk paket
-base. Kalau ada paket base yang akan dihapus, hentikan dan kembali ke
-snapshot.
+### Langkah 7: paket sisa, `.pkgnew`, `.pkgsave`
 
-Langkah 7: pkg menulis `<file>.pkgnew` dan membiarkan `<file>` apa adanya
-kalau file konfigurasi di disk berbeda dari yang tercatat di paket lama dan
-merge gagal (`pkg_extract_finalize` di `libpkg/pkg_add.c`). Setelah
-installworld, ini biasa terjadi pada `/etc/rc.d/*`, yang dipasang sebagai
-`CONFS`. Isi `.pkgnew` adalah isi paket baru; kalau di dalamnya masih ada
-teks FreeBSD (mis. `NAME=FreeBSD` di `rc.d/os-release`), paket itu dibangun
-dari tree lama. Cocokkan dengan paketnya sebelum menghapus:
+**Paket sisa.** `CoorvoOS-lldb-dev` 15.0 membuat `pkg check -d` mengeluh
+(dependensi `FreeBSD-lldb`, `libprivateclang.so.19`). Isinya hanya symlink
+`/usr/lib/libprivatelldb.so`, jadi aman dihapus. Paket kernel sisa periksa
+dulu dengan `pkg info -l` sebelum memutuskan.
 
 ```sh
-# 7. File konfigurasi yang gagal di-merge otomatis
+pkg info -l CoorvoOS-lldb-dev
+pkg delete -y CoorvoOS-lldb-dev
+```
+
+**`.pkgnew`.** pkg menulis `<file>.pkgnew` dan membiarkan `<file>` apa
+adanya kalau file konfigurasi di disk berbeda dari yang tercatat di paket
+lama dan merge gagal (`pkg_extract_finalize` di `libpkg/pkg_add.c`). Setelah
+installworld, ini biasa terjadi pada `/etc/rc.d/*`, yang dipasang sebagai
+`CONFS`. Di VM uji, `/etc/rc.d/os-release.pkgnew` berisi versi FreeBSD,
+sedangkan file aktif sudah CoorvoOS. Jadi jangan menilai dari `.pkgnew`;
+cocokkan dengan isi paket:
+
+```sh
 for f in $(find /etc /boot /usr/local/etc -name '*.pkgnew' 2>/dev/null); do
   if cmp -s "${f%.pkgnew}" "$f"; then echo "IDENTIK: $f"
   else echo "===== BEDA: $f"; diff -u "${f%.pkgnew}" "$f"; fi
 done
-grep '^[[:space:]]*NAME=' /etc/rc.d/os-release*   # harus NAME=CoorvoOS
-# IDENTIK: hapus .pkgnew. BEDA: gabungkan manual, lalu hapus .pkgnew.
 
+R=/usr/obj/usr/src/repo/FreeBSD:16:amd64/latest
+ls $R | grep '^CoorvoOS-rc-[0-9]'      # nama file paket yang persis
+tar -xOf $R/CoorvoOS-rc-<versi>.pkg /etc/rc.d/os-release | grep 'NAME='
+```
+
+Tulis nama file paket persis; glob `CoorvoOS-rc-*.pkg` ikut mencocokkan
+paket `-dbg`. Kalau isi paket sama dengan file aktif, `.pkgnew` dihapus
+saja. Kalau isi paket yang berisi FreeBSD, paketnya dibangun dari tree lama:
+bangun ulang paket, jangan hanya menghapus `.pkgnew`.
+
+**`.pkgsave`.** pkg menyimpan file yang ditimpanya sebagai `.pkgsave` (di VM
+uji: 271 file). Biarkan sampai sistem terbukti boot normal, lalu:
+
+```sh
+find / -xdev -name '*.pkgsave' -delete
+```
+
+```sh
 # 8. Reboot dan verifikasi
 shutdown -r now
 uname -v                                   # CoorvoOS ...
+uname -s                                   # FreeBSD (disengaja, lihat bawah)
 pkg info | grep -c '^CoorvoOS-'            # ratusan
 pkg info | grep '^FreeBSD-'                # kosong
 pkg upgrade -n -r CoorvoOS-base            # "Your packages are up to date"
 ```
 
+`uname -s` (`kern.ostype`) tetap `FreeBSD` dengan sengaja: nilai itu
+membentuk ABI pkg (`FreeBSD:16:amd64`) dan dipakai build system serta
+configure script untuk mengenali platform. Nama produk ada di
+`/etc/os-release`, motd, banner login (`gettytab`), loader, dan `uname -v`.
+
 ### Rollback
+
+**Hanya kalau ada masalah.** Perintah di bawah membatalkan migrasi dan bukan
+bagian dari urutan normal.
 
 - Sebelum langkah 5 (hanya database yang berubah):
   `rm -rf /var/db/pkg && mv /var/db/pkg.before-coorvo /var/db/pkg`.
@@ -233,31 +282,71 @@ pkg upgrade -n -r CoorvoOS-base            # "Your packages are up to date"
 Untuk VM uji coba, alternatif paling aman adalah memasang CoorvoOS baru dari
 ISO yang sudah berisi paket `CoorvoOS-*`, tanpa migrasi.
 
-## 5. Masalah yang diketahui
+## 5. Masalah yang diketahui: makewhatis Signal 11
 
-`makewhatis` (mandoc) crash dengan Signal 11 saat `make packages`, sudah tiga
-kali, dan sempat menggagalkan build. Selidiki sebelum `make release`.
+Di VM uji, `make installworld` dua kali gagal di langkah terakhir
+(`share/man`, `make makedb`) dan `make packages` sekali gagal di stageworld,
+karena `makewhatis` crash dengan Signal 11. dmesg:
+`pid NNNN (mandoc), ... exited on signal 11 (core dumped)`. Percobaan ulang
+tanpa perubahan lolos, jadi crash-nya acak. `makewhatis` yang dijalankan
+manual dan trigger pkg `mandoc.ucl` tidak pernah crash. Belum ada backtrace.
 
-Yang dijalankan adalah `makewhatis` milik **host** (`/usr/bin/makewhatis`,
-disalin ke `INSTALLTMP` lewat `ITOOLS` di `Makefile.inc1`), dipanggil target
-`makedb` di `share/man/Makefile` pada direktori staging. Jadi crash berasal
-dari world yang terpasang di mesin build, bukan dari hasil build baru.
-Perubahan man page di branch ini (`loader.conf.5`, `menu.4th.8`,
-`drawer.lua.8`) hanya mengganti kata, tidak mengubah struktur mdoc.
+Yang sudah diperiksa di source:
 
-Data yang dibutuhkan:
+- Tidak ada perubahan CoorvoOS di `contrib/mandoc`, `usr.bin/mandoc`,
+  `lib/libc`, atau `share/man`. Tiga man page yang diubah (`loader.conf.5`,
+  `menu.4th.8`, `drawer.lua.8`) hanya berganti kata.
+- Selama installworld/stageworld, `makewhatis` yang jalan **bukan**
+  `/usr/bin/makewhatis`. `usr.bin/mandoc` selalu dibangun sebagai bootstrap
+  tool (daftar `bootstrap-tools` di `Makefile.inc1`) dan dipasang di
+  `${WORLDTMP}/legacy/usr/bin`. PATH install (`IMAKEENV`) menaruh
+  `STRICTTMPPATH`, yang berisi folder legacy itu, di depan `INSTALLTMP`.
+- Di folder legacy, `LINKS` dipasang oleh `tools/install.sh`, yang
+  mengubah `-l mr` menjadi symlink, jadi `makewhatis -> mandoc`. Kernel
+  menamai proses dari komponen terakhir path setelah symlink diikuti, maka
+  dmesg menyebut `(mandoc)`. `/usr/bin/makewhatis` adalah hardlink, sehingga
+  crash di sana akan tercatat sebagai `(makewhatis)`.
+- Riwayat upstream sejak vendor import 2025-09-26 hanya mengubah tabel teks
+  (`st.c`, `lib.in`) dan const untuk C23 (`9f18614d535`, tanpa perubahan
+  perilaku). NEWS mandoc tidak mencatat rilis setelah 1.14.6.
+
+Jadi dugaan terkuat: yang crash adalah binary bootstrap di folder legacy.
+Ini belum terbukti; perlu backtrace.
 
 ```sh
-grep -n -B5 'Signal 11' /root/build.log
-# jalankan ulang di direktori staging (WSTAGEDIR = ${OBJTOP}/worldstage)
-sysctl kern.coredump=1; ulimit -c unlimited
-makewhatis -p /usr/obj/usr/src/amd64.amd64/worldstage/usr/share/man
-dmesg | tail          # "pid ... (makewhatis), ... exited on signal 11"
+# 0. Binary mana yang ada
+L=/usr/obj/usr/src/amd64.amd64/tmp/legacy/usr/bin
+ls -li /usr/bin/mandoc /usr/bin/makewhatis
+ls -l $L/mandoc $L/makewhatis
+
+# 1. Arahkan core dump
+mkdir -p /var/crash
+sysctl kern.coredump=1
+sysctl kern.corefile=/var/crash/%N.%P.core
+ulimit -c unlimited
+
+# 2. Ulangi sampai crash (ganti BIN dan DIR untuk tiap kombinasi:
+#    BIN = $L/makewhatis atau /usr/bin/makewhatis,
+#    DIR = /usr/share/man atau .../worldstage/usr/share/man)
+BIN=$L/makewhatis
+DIR=/usr/obj/usr/src/amd64.amd64/worldstage/usr/share/man
+i=0
+while [ $i -lt 200 ]; do
+  i=$((i + 1))
+  $BIN $DIR; rc=$?
+  if [ $rc -ne 0 ]; then echo "iterasi $i: exit $rc"; break; fi
+done
+ls -l /var/crash/*.core; dmesg | tail -3
+
+# 3. Backtrace; "image list" menunjukkan path binary yang crash
+file /var/crash/<nama>.core
+lldb -b -o 'image list' -o 'bt all' -c /var/crash/<nama>.core $BIN
 ```
 
-Kalau crash bisa diulang, cari file man penyebabnya dengan `makewhatis -t`
-per file atau `mandoc -T lint`. Kalau tidak bisa diulang, curigai memori VM
-(RAM/swap habis saat `-j8`).
+Binary legacy tidak di-strip (`tools/install.sh` mengabaikan `-s`), jadi
+nama fungsi terlihat di backtrace. Untuk
+`/usr/bin/makewhatis`, pasang dulu `CoorvoOS-mandoc-dbg` supaya lldb punya
+simbol.
 
 ## 6. Yang belum ikut CoorvoOS
 
