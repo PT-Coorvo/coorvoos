@@ -105,7 +105,7 @@ EOF
 	fi
 fi
 
-publisher="The FreeBSD Project.  https://www.FreeBSD.org/"
+publisher="The CoorvoOS Project.  https://coorvo.com/"
 echo "/dev/iso9660/$LABEL / cd9660 ro 0 0" > "$BASEBITSDIR/etc/fstab"
 if [ -n "${METALOG}" ]; then
 	echo "./etc/fstab type=file uname=root gname=wheel mode=0644" >> ${metalogfilename}

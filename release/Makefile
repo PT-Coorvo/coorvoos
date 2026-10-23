@@ -101,7 +101,7 @@ PKGBASE_CLEAN=	env ${PKG_ENV} ${PKG_CMD} ${PKG_ARGS} ${PKGBASE_REPO_ARGS} clean 
 .endif
 
 .if !defined(VOLUME_LABEL) || empty(VOLUME_LABEL)
-VOLUME_LABEL=	FreeBSD_Install
+VOLUME_LABEL=	CoorvoOS_Install
 .endif
 
 .if !exists(${PORTSDIR})
@@ -465,8 +465,8 @@ release-install:
 	${XZ_CMD} -k ${DESTDIR}/${OSRELEASE}-${I}
 . endif
 .endfor
-	( cd ${DESTDIR} && sha512 ${OSRELEASE}* > ${DESTDIR}/CHECKSUM.SHA512 )
-	( cd ${DESTDIR} && sha256 ${OSRELEASE}* > ${DESTDIR}/CHECKSUM.SHA256 )
+	( cd ${DESTDIR} && sha512 ${OSRELEASE}* > ${DESTDIR}/CHECKSUM.SHA512-${OSRELEASE} )
+	( cd ${DESTDIR} && sha256 ${OSRELEASE}* > ${DESTDIR}/CHECKSUM.SHA256-${OSRELEASE} )
 .endif
 .if !defined (NOPKGBASE) || empty(NOPKGBASE)
 	mkdir -p ${DESTDIR}/pkgbase
