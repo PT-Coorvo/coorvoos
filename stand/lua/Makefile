@@ -23,6 +23,7 @@ FILES=	cli.lua \
 	loader.lua \
 	gfx-beastie.lua \
 	gfx-beastiebw.lua \
+	gfx-coorvo.lua \
 	gfx-fbsdbw.lua \
 	gfx-install.lua \
 	gfx-orb.lua \

@@ -1,3 +1,15 @@
+CoorvoOS Source:
+----------------
+CoorvoOS is an operating system by PT Coorvo, based on FreeBSD 16.0-CURRENT.
+The user-visible branding (boot menu, kernel version string, installer,
+`/etc/os-release`, login message and release image names) says CoorvoOS, while
+ABI-visible identifiers (`uname -s`, `kern.ostype`, `__FreeBSD__`,
+`__FreeBSD_version` and the pkg ABI) remain `FreeBSD` so that FreeBSD packages
+and third-party software keep working.
+
+See [coorvo/docs/ARCHITECTURE.md](coorvo/docs/ARCHITECTURE.md) for an overview
+of the source tree.
+
 FreeBSD Source:
 ---------------
 This is the top level of the FreeBSD source directory.

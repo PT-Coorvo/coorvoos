@@ -7,7 +7,7 @@ NEWVERS = ${SRCTOP}/sys/conf/newvers.sh
 freebsd-version.sh: ${.CURDIR}/freebsd-version.sh.in ${NEWVERS}
 	eval $$(sh ${NEWVERS} -v); \
 	if ! sed -e "\
-			s/@@TYPE@@/$${TYPE}/g; \
+			s/@@BRAND@@/$${BRAND}/g; \
 			s/@@REVISION@@/$${REVISION}/g; \
 			s/@@BRANCH@@/$${BRANCH}/g; \
 		" ${.CURDIR}/freebsd-version.sh.in >${.TARGET} ; then \

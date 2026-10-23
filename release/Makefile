@@ -61,15 +61,15 @@ DISTDIR=	dist
 
 # Define OSRELEASE by using newvers.sh
 .if !defined(OSRELEASE) || empty(OSRELEASE)
-.for _V in TYPE BRANCH REVISION
+.for _V in TYPE BRAND BRANCH REVISION
 ${_V}!=	eval $$(awk '/^${_V}=/{print}' ${.CURDIR:H}/sys/conf/newvers.sh); echo $$${_V}
 .endfor
 .for _V in ${TARGET_ARCH}
 .if !empty(TARGET:M${_V})
-OSRELEASE=	${TYPE}-${REVISION}-${BRANCH}-${TARGET}
+OSRELEASE=	${BRAND}-${REVISION}-${BRANCH}-${TARGET}
 VOLUME_LABEL=	${REVISION:C/[.-]/_/g}_${BRANCH:C/[.-]/_/g}_${TARGET}
 .else
-OSRELEASE=	${TYPE}-${REVISION}-${BRANCH}-${TARGET}-${TARGET_ARCH}
+OSRELEASE=	${BRAND}-${REVISION}-${BRANCH}-${TARGET}-${TARGET_ARCH}
 VOLUME_LABEL=	${REVISION:C/[.-]/_/g}_${BRANCH:C/[.-]/_/g}_${TARGET_ARCH}
 .endif
 .endfor
@@ -101,7 +101,7 @@ PKGBASE_CLEAN=	env ${PKG_ENV} ${PKG_CMD} ${PKG_ARGS} ${PKGBASE_REPO_ARGS} clean 
 .endif
 
 .if !defined(VOLUME_LABEL) || empty(VOLUME_LABEL)
-VOLUME_LABEL=	FreeBSD_Install
+VOLUME_LABEL=	CoorvoOS_Install
 .endif
 
 .if !exists(${PORTSDIR})
@@ -224,7 +224,7 @@ pkgbase-repo.tar: pkgbase-repo
 
 pkgbase-repo-dir: pkgbase-repo
 	mkdir -p pkgbase-repo-dir
-	printf "FreeBSD-base: { url: "file://%s", enabled: yes }" \
+	printf "CoorvoOS-base: { url: "file://%s", enabled: yes }" \
 	    ${.OBJDIR}/pkgbase-repo/${PKG_ABI}/latest \
 	    > pkgbase-repo-dir/FreeBSD-base.conf
 
@@ -465,8 +465,8 @@ release-install:
 	${XZ_CMD} -k ${DESTDIR}/${OSRELEASE}-${I}
 . endif
 .endfor
-	( cd ${DESTDIR} && sha512 ${OSRELEASE}* > ${DESTDIR}/CHECKSUM.SHA512 )
-	( cd ${DESTDIR} && sha256 ${OSRELEASE}* > ${DESTDIR}/CHECKSUM.SHA256 )
+	( cd ${DESTDIR} && sha512 ${OSRELEASE}* > ${DESTDIR}/CHECKSUM.SHA512-${OSRELEASE} )
+	( cd ${DESTDIR} && sha256 ${OSRELEASE}* > ${DESTDIR}/CHECKSUM.SHA256-${OSRELEASE} )
 .endif
 .if !defined (NOPKGBASE) || empty(NOPKGBASE)
 	mkdir -p ${DESTDIR}/pkgbase

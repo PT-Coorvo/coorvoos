@@ -1,4 +1,4 @@
-OSNAME?=	FreeBSD
+OSNAME?=	CoorvoOS
 GENHDRS=	opt_osname.h
 SRCS+=		${GENHDRS}
 CLEANFILES+=	${GENHDRS}
