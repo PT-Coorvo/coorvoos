@@ -12,7 +12,9 @@ MAN+=	beastie.4th.8 \
 
 FILES+=	beastie.4th
 FILES+=	brand.4th
+FILES+=	brand-coorvo.4th
 FILES+=	brand-fbsd.4th
+FILES+=	brand-install.4th
 FILES+=	check-password.4th
 FILES+=	color.4th
 FILES+=	delay.4th
